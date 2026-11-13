@@ -1,0 +1,535 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GARCIA - Advanced Search</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#050a13;color:#eaf7ff;font-family:Arial,sans-serif}
+header{text-align:center;padding:45px 10px 25px}
+.logo{font-size:clamp(48px,10vw,85px);letter-spacing:12px;font-weight:900;color:#00d9ff;text-shadow:0 0 12px #00bfff,0 0 35px #006aff}
+.subtitle{color:#8abbd7;letter-spacing:5px;font-size:12px;margin-top:12px}
+main{width:min(950px,94%);margin:25px auto}
+button{cursor:pointer;border:1px solid #087fae;background:#092c48;color:#dff8ff;border-radius:10px;padding:12px 17px}
+button:hover,button.active{background:#006c9c;box-shadow:0 0 15px #00bfff77}
+.search{display:flex;gap:10px;padding:10px;border:1px solid #00cfff;border-radius:16px;background:#0b192a}
+.search input{flex:1;min-width:0;padding:14px;background:transparent;border:0;outline:0;color:white;font-size:17px}
+.tabs{display:flex;flex-wrap:wrap;justify-content:center;gap:9px;margin:22px 0}
+#status{text-align:center;color:#00d9ff;min-height:25px;margin:20px 0}
+#results{display:grid;gap:14px;margin:20px 0 60px}
+.result{background:#0b1929;border:1px solid #153d58;border-radius:13px;padding:18px;overflow-wrap:anywhere}
+.result h3{color:#00d9ff;margin:0 0 9px}
+.result a{color:#00cfff;text-decoration:none}
+.result p{color:#b6c9d8;line-height:1.6}
+.result img{max-width:100%;width:190px;max-height:150px;object-fit:cover;border-radius:9px}
+.map{width:100%;height:430px;border:1px solid #087fae;border-radius:12px}
+footer{text-align:center;color:#526c80;padding:30px;font-size:12px}
+#translator,#calculator,#musicPlayer,#garciaAI{display:none;background:#0b1929;border:1px solid #087fae;border-radius:14px;padding:20px;margin:20px auto 60px}
+#translator h2,#calculator h2,#musicPlayer h2,#garciaAI h2{color:#00d9ff;margin-top:0}
+.translator-controls{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0}
+#translator select,#translator textarea{background:#071525;color:#eaf7ff;border:1px solid #087fae;border-radius:9px;padding:12px;font:inherit}
+#translator select{flex:1;min-width:130px}
+#translator textarea{width:100%;min-height:130px}
+#translationOutput{min-height:100px;white-space:pre-wrap;overflow-wrap:anywhere;background:#071525;border:1px solid #153d58;border-radius:9px;padding:14px;color:#b6eaff}
+#calculator{max-width:380px}
+#calcDisplay{width:100%;padding:18px 12px;margin-bottom:14px;background:#071525;color:#00e5ff;border:1px solid #087fae;border-radius:10px;text-align:right;font-size:28px}
+.calc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+.calc-grid button{min-height:58px;font-size:21px}
+.calc-equals{background:#006c9c}
+#musicPlayer{max-width:650px}
+#musicPlayer input[type=file]{max-width:100%;color:#b6eaff;margin:10px 0}
+.music-now{color:#b6eaff;overflow-wrap:anywhere;margin:15px 0}
+.music-controls{display:flex;flex-wrap:wrap;justify-content:center;gap:9px;margin:12px 0}
+.music-controls button{min-width:58px;font-size:18px}
+#musicProgress,#musicVolume{width:100%;accent-color:#00cfff;cursor:pointer}
+.music-times{display:flex;justify-content:space-between;color:#8abbd7;font-size:12px}
+#musicPlaylist{list-style:none;padding:0;margin:15px 0}
+#musicPlaylist li{padding:10px;border:1px solid #153d58;border-radius:8px;margin-top:7px;cursor:pointer;overflow-wrap:anywhere}
+#musicPlaylist li.current{border-color:#00d9ff;color:#00d9ff;background:#07304a}
+#translationStatus,#calcStatus,#musicStatus{color:#00d9ff;text-align:center;min-height:20px;margin-top:12px}
+
+/* Pestaña GARC IA */
+#garciaAI{max-width:850px}
+#aiChat{height:420px;overflow-y:auto;background:#071525;border:1px solid #153d58;border-radius:12px;padding:15px}
+.ai-message{padding:13px;margin:12px 0;border-radius:12px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere}
+.ai-user{background:#123b58}
+.ai-answer{background:#102b35;border:1px solid #087e91}
+#aiForm{display:flex;gap:10px;margin-top:14px}
+#aiQuestion{flex:1;min-width:0;padding:14px;background:#071525;border:1px solid #087fae;border-radius:10px;color:white;font-size:16px}
+#aiStatus{text-align:center;color:#00d9ff;min-height:22px;margin-top:12px}
+@media(max-width:550px){
+ header{padding-top:35px}
+ .logo{letter-spacing:6px}
+ .search input{font-size:14px;padding:9px}
+ .tabs button{padding:10px;font-size:13px}
+ #aiForm{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<header>
+<div class="logo">GARCIA</div>
+<div class="subtitle">ADVANCED SEARCH SYSTEM</div>
+</header>
+
+<main>
+<form class="search" id="searchForm">
+<input id="query" type="search" placeholder="¿Qué quieres encontrar?" autocomplete="off">
+<button type="submit">🔎</button>
+</form>
+
+<nav class="tabs">
+<button class="active" data-type="web">🌐 Web</button>
+<button data-type="images">🖼️ Imágenes</button>
+<button data-type="videos">🎬 Vídeos</button>
+<button data-type="news">📰 Noticias</button>
+<button data-type="maps">🗺️ Mapas</button>
+<button data-type="translate">🌍 Traductor</button>
+<button data-type="calculator">🧮 Calculadora</button>
+<button data-type="music">🎵 Música</button>
+<button data-type="ai">🤖 GARC IA</button>
+</nav>
+
+<section id="translator">
+<h2>Traductor GARCIA</h2>
+<div class="translator-controls">
+<select id="sourceLanguage">
+<option value="es" selected>Español</option>
+<option value="en">Inglés</option>
+<option value="fr">Francés</option>
+<option value="de">Alemán</option>
+<option value="it">Italiano</option>
+<option value="pt">Portugués</option>
+<option value="ca">Catalán</option>
+<option value="ja">Japonés</option>
+<option value="zh-CN">Chino</option>
+<option value="ru">Ruso</option>
+<option value="ar">Árabe</option>
+</select>
+<select id="targetLanguage">
+<option value="en" selected>Inglés</option>
+<option value="es">Español</option>
+<option value="fr">Francés</option>
+<option value="de">Alemán</option>
+<option value="it">Italiano</option>
+<option value="pt">Portugués</option>
+<option value="ca">Catalán</option>
+<option value="ja">Japonés</option>
+<option value="zh-CN">Chino</option>
+<option value="ru">Ruso</option>
+<option value="ar">Árabe</option>
+</select>
+</div>
+<textarea id="translationInput" placeholder="Escribe el texto que quieres traducir..."></textarea>
+<div class="translator-controls">
+<button id="translateButton" type="button">Traducir</button>
+<button id="copyTranslation" type="button">Copiar traducción</button>
+</div>
+<div id="translationOutput">Aquí aparecerá la traducción.</div>
+<div id="translationStatus"></div>
+</section>
+
+<section id="calculator">
+<h2>Calculadora GARCIA</h2>
+<input id="calcDisplay" value="0" readonly>
+<div class="calc-grid">
+<button data-calc="clear">C</button>
+<button data-calc="back">⌫</button>
+<button data-calc="percent">%</button>
+<button data-calc="/">÷</button>
+<button data-calc="1">1</button>
+<button data-calc="2">2</button>
+<button data-calc="3">3</button>
+<button data-calc="+">+</button>
+<button data-calc="4">4</button>
+<button data-calc="5">5</button>
+<button data-calc="6">6</button>
+<button data-calc="-">−</button>
+<button data-calc="7">7</button>
+<button data-calc="8">8</button>
+<button data-calc="9">9</button>
+<button data-calc="*">×</button>
+<button data-calc="0" style="grid-column:span 2">0</button>
+<button data-calc=".">.</button>
+<button class="calc-equals" data-calc="equals">=</button>
+</div>
+<div id="calcStatus"></div>
+</section>
+
+<section id="musicPlayer">
+<h2>Reproductor de música GARCIA</h2>
+<p>Elige canciones de tu ordenador para escucharlas aquí.</p>
+<input id="musicFiles" type="file" accept="audio/*" multiple>
+<div class="music-now" id="musicNow">Ninguna canción seleccionada</div>
+<audio id="musicAudio" preload="metadata"></audio>
+<div class="music-times">
+<span id="musicElapsed">0:00</span>
+<span id="musicDuration">0:00</span>
+</div>
+<input id="musicProgress" type="range" min="0" max="1000" value="0">
+<div class="music-controls">
+<button id="musicPrevious">⏮️</button>
+<button id="musicPlay">▶️</button>
+<button id="musicNext">⏭️</button>
+</div>
+<label for="musicVolume">🔊 Volumen</label>
+<input id="musicVolume" type="range" min="0" max="1" step="0.01" value="0.8">
+<h3>Lista de reproducción</h3>
+<ul id="musicPlaylist"></ul>
+<div id="musicStatus"></div>
+</section>
+
+<section id="garciaAI">
+<h2>🤖 GARC IA</h2>
+<p>Tu inteligencia artificial personal. Pregúntame lo que quieras.</p>
+<div id="aiChat">
+<div class="ai-message ai-answer">¡Hola! Soy GARC IA. ¿En qué puedo ayudarte hoy?</div>
+</div>
+<form id="aiForm">
+<input id="aiQuestion" type="text" placeholder="Escribe tu pregunta..." autocomplete="off" required>
+<button id="aiSend" type="submit">Enviar</button>
+</form>
+<div id="aiStatus">GARC IA está lista</div>
+</section>
+
+<div id="status">Escribe algo para comenzar tu búsqueda.</div>
+<section id="results"></section>
+</main>
+
+<footer>GARCIA © 2026 | ADVANCED SEARCH</footer>
+
+<script>
+const input=document.getElementById("query");
+const results=document.getElementById("results");
+const statusText=document.getElementById("status");
+const tabs=document.querySelectorAll("[data-type]");
+const translator=document.getElementById("translator");
+const calculator=document.getElementById("calculator");
+const musicPlayer=document.getElementById("musicPlayer");
+const garciaAI=document.getElementById("garciaAI");
+const searchForm=document.getElementById("searchForm");
+let category="web";
+
+tabs.forEach(button=>{
+button.addEventListener("click",()=>{
+category=button.dataset.type;
+tabs.forEach(b=>b.classList.remove("active"));
+button.classList.add("active");
+
+const special=["translate","calculator","music","ai"].includes(category);
+translator.style.display=category==="translate"?"block":"none";
+calculator.style.display=category==="calculator"?"block":"none";
+musicPlayer.style.display=category==="music"?"block":"none";
+garciaAI.style.display=category==="ai"?"block":"none";
+searchForm.style.display=special?"none":"flex";
+statusText.style.display=special?"none":"block";
+results.style.display=special?"none":"grid";
+
+if(!special&&input.value.trim())search();
+});
+});
+
+searchForm.addEventListener("submit",e=>{e.preventDefault();search()});
+function showStatus(message){statusText.textContent=message}
+
+function makeCard(title,description,url){
+const card=document.createElement("article");
+card.className="result";
+const h=document.createElement("h3");
+const a=document.createElement("a");
+a.href=url;a.target="_blank";a.rel="noopener noreferrer";a.textContent=title;
+h.appendChild(a);card.appendChild(h);
+const p=document.createElement("p");
+p.textContent=description||"Sin descripción disponible.";
+card.appendChild(p);
+return card;
+}
+
+async function searchWeb(q){
+const url="https://es.wikipedia.org/w/api.php?"+new URLSearchParams({
+action:"query",list:"search",srsearch:q,srlimit:"15",format:"json",origin:"*"
+});
+const response=await fetch(url);
+if(!response.ok)throw Error();
+const data=await response.json();
+const items=data.query.search;
+if(!items.length){showStatus("No se encontraron resultados.");return}
+showStatus("Resultados encontrados: "+items.length);
+items.forEach(item=>{
+const link="https://es.wikipedia.org/wiki/"+encodeURIComponent(item.title.replace(/ /g,"_"));
+results.appendChild(makeCard(item.title,item.snippet.replace(/<[^>]*>/g,""),link));
+});
+}
+
+async function searchImages(q){
+const url="https://commons.wikimedia.org/w/api.php?"+new URLSearchParams({
+action:"query",generator:"search",gsrsearch:q+" filetype:bitmap",gsrnamespace:"6",
+gsrlimit:"15",prop:"imageinfo",iiprop:"url",iiurlwidth:"300",format:"json",origin:"*"
+});
+const response=await fetch(url);
+if(!response.ok)throw Error();
+const data=await response.json();
+const pages=Object.values(data.query?.pages||{});
+if(!pages.length){showStatus("No se encontraron imágenes.");return}
+showStatus("Imágenes encontradas: "+pages.length);
+pages.forEach(item=>{
+const src=item.imageinfo?.[0]?.thumburl||item.imageinfo?.[0]?.url;
+if(!src)return;
+const card=document.createElement("article");card.className="result";
+const h=document.createElement("h3");h.textContent=item.title;
+const img=document.createElement("img");img.src=src;img.alt=item.title;img.loading="lazy";
+card.append(h,img);results.appendChild(card);
+});
+}
+
+async function searchNews(q){
+const url="https://api.gdeltproject.org/api/v2/doc/doc?"+new URLSearchParams({
+query:q,mode:"ArtList",format:"json",maxrecords:"15",sort:"DateDesc"
+});
+const response=await fetch(url);
+if(!response.ok)throw Error();
+const data=await response.json();
+const articles=data.articles||[];
+if(!articles.length){showStatus("No se encontraron noticias.");return}
+showStatus("Noticias encontradas: "+articles.length);
+articles.forEach(item=>results.appendChild(makeCard(item.title,item.seendate,item.url)));
+}
+
+async function searchMaps(q){
+const url="https://nominatim.openstreetmap.org/search?"+new URLSearchParams({q,format:"json",limit:"8"});
+const response=await fetch(url);
+if(!response.ok)throw Error();
+const places=await response.json();
+if(!places.length){showStatus("No se encontraron lugares.");return}
+showStatus("Lugares encontrados: "+places.length);
+places.forEach(place=>results.appendChild(makeCard(
+place.display_name,"Coordenadas: "+place.lat+", "+place.lon,
+"https://www.openstreetmap.org/?mlat="+place.lat+"&mlon="+place.lon
+)));
+const first=places[0];
+const map=document.createElement("iframe");map.className="map";map.loading="lazy";map.title="Mapa";
+const bbox=[Number(first.lon)-.04,Number(first.lat)-.025,Number(first.lon)+.04,Number(first.lat)+.025];
+map.src="https://www.openstreetmap.org/export/embed.html?bbox="+bbox.join("%2C")+"&layer=mapnik&marker="+first.lat+"%2C"+first.lon;
+results.appendChild(map);
+}
+
+async function search(){
+const q=input.value.trim();
+if(!q){showStatus("Escribe algo para buscar.");return}
+results.replaceChildren();showStatus("Buscando...");
+try{
+if(category==="web")await searchWeb(q);
+else if(category==="images")await searchImages(q);
+else if(category==="news")await searchNews(q);
+else if(category==="maps")await searchMaps(q);
+else if(category==="videos")results.appendChild(makeCard(
+"Buscar vídeos sobre: "+q,"Abre los vídeos relacionados en YouTube.",
+"https://www.youtube.com/results?search_query="+encodeURIComponent(q)
+));
+}catch(error){showStatus("No se pudo conectar con el servicio. Inténtalo de nuevo.")}
+}
+
+// Traductor
+document.getElementById("translateButton").addEventListener("click",async()=>{
+const text=document.getElementById("translationInput").value.trim();
+const from=document.getElementById("sourceLanguage").value;
+const to=document.getElementById("targetLanguage").value;
+const output=document.getElementById("translationOutput");
+const status=document.getElementById("translationStatus");
+if(!text){status.textContent="Escribe un texto para traducir.";return}
+if(from===to){output.textContent=text;status.textContent="Los idiomas son iguales.";return}
+status.textContent="Traduciendo...";
+try{
+const url="https://api.mymemory.translated.net/get?"+new URLSearchParams({q:text,langpair:from+"|"+to});
+const response=await fetch(url);
+if(!response.ok)throw Error();
+const data=await response.json();
+if(!data.responseData||data.responseStatus!==200)throw Error();
+output.textContent=data.responseData.translatedText;
+status.textContent="Traducción completada.";
+}catch(error){status.textContent="No se pudo traducir. Inténtalo más tarde."}
+});
+
+document.getElementById("copyTranslation").addEventListener("click",async()=>{
+const text=document.getElementById("translationOutput").textContent;
+const status=document.getElementById("translationStatus");
+if(!text||text==="Aquí aparecerá la traducción."){status.textContent="Primero traduce un texto.";return}
+try{await navigator.clipboard.writeText(text);status.textContent="Traducción copiada."}
+catch(error){status.textContent="No se pudo copiar automáticamente."}
+});
+
+// Calculadora
+const calcDisplay=document.getElementById("calcDisplay");
+const calcStatus=document.getElementById("calcStatus");
+let calcExpression="";
+document.querySelectorAll("[data-calc]").forEach(button=>{
+button.addEventListener("click",()=>{
+const key=button.dataset.calc;calcStatus.textContent="";
+if(key==="clear"){calcExpression="";calcDisplay.value="0"}
+else if(key==="back"){calcExpression=calcExpression.slice(0,-1);calcDisplay.value=calcExpression||"0"}
+else if(key==="percent"){
+const match=calcExpression.match(/(\d+(?:\.\d+)?)$/);
+if(match){calcExpression=calcExpression.slice(0,-match[1].length)+String(Number(match[1])/100);calcDisplay.value=calcExpression}
+}
+else if(key==="equals"){
+if(!calcExpression)return;
+try{
+if(!/^[0-9+*/.()\s-]+$/.test(calcExpression))throw Error();
+const result=Function('"use strict";return ('+calcExpression+')')();
+if(!Number.isFinite(result))throw Error();
+calcExpression=String(Number(result.toPrecision(12)));calcDisplay.value=calcExpression;
+}catch(error){calcStatus.textContent="Operación no válida."}
+}
+else{if(calcExpression.length<40){calcExpression+=key;calcDisplay.value=calcExpression}}
+});
+});
+
+// Reproductor de música
+const musicAudio=document.getElementById("musicAudio");
+const musicFiles=document.getElementById("musicFiles");
+const musicPlaylist=document.getElementById("musicPlaylist");
+const musicNow=document.getElementById("musicNow");
+const musicPlay=document.getElementById("musicPlay");
+const musicProgress=document.getElementById("musicProgress");
+const musicElapsed=document.getElementById("musicElapsed");
+const musicDuration=document.getElementById("musicDuration");
+const musicStatus=document.getElementById("musicStatus");
+let musicTracks=[],musicIndex=-1,musicObjectUrl=null;
+
+function musicTime(seconds){
+if(!Number.isFinite(seconds))return "0:00";
+return Math.floor(seconds/60)+":"+String(Math.floor(seconds%60)).padStart(2,"0");
+}
+
+function renderMusicPlaylist(){
+musicPlaylist.replaceChildren();
+musicTracks.forEach((file,index)=>{
+const item=document.createElement("li");
+item.textContent=(index+1)+". "+file.name;
+if(index===musicIndex)item.classList.add("current");
+item.addEventListener("click",()=>loadMusicTrack(index,true));
+musicPlaylist.appendChild(item);
+});
+}
+
+function loadMusicTrack(index,autoplay){
+if(index<0||index>=musicTracks.length)return;
+musicIndex=index;
+if(musicObjectUrl)URL.revokeObjectURL(musicObjectUrl);
+musicObjectUrl=URL.createObjectURL(musicTracks[index]);
+musicAudio.src=musicObjectUrl;
+musicNow.textContent=musicTracks[index].name;
+musicProgress.value=0;musicElapsed.textContent="0:00";musicDuration.textContent="0:00";
+renderMusicPlaylist();
+if(autoplay){
+musicAudio.play().then(()=>musicPlay.textContent="⏸️")
+.catch(()=>musicStatus.textContent="No se pudo reproducir este archivo.");
+}else musicPlay.textContent="▶️";
+}
+
+musicFiles.addEventListener("change",()=>{
+musicTracks=Array.from(musicFiles.files||[]).filter(file=>file.type.startsWith("audio/"));
+musicIndex=-1;
+musicStatus.textContent=musicTracks.length?musicTracks.length+" canción(es) añadida(s).":"Selecciona archivos de audio.";
+renderMusicPlaylist();
+if(musicTracks.length)loadMusicTrack(0,false);
+});
+
+musicPlay.addEventListener("click",()=>{
+if(musicIndex===-1){musicStatus.textContent="Primero elige canciones.";return}
+if(musicAudio.paused){
+musicAudio.play().then(()=>musicPlay.textContent="⏸️")
+.catch(()=>musicStatus.textContent="No se pudo iniciar la canción.");
+}else musicAudio.pause();
+});
+
+document.getElementById("musicPrevious").addEventListener("click",()=>{
+if(musicTracks.length)loadMusicTrack((musicIndex-1+musicTracks.length)%musicTracks.length,true);
+});
+document.getElementById("musicNext").addEventListener("click",()=>{
+if(musicTracks.length)loadMusicTrack((musicIndex+1)%musicTracks.length,true);
+});
+
+musicAudio.addEventListener("timeupdate",()=>{
+if(!Number.isFinite(musicAudio.duration)||musicAudio.duration<=0)return;
+musicProgress.value=Math.round(musicAudio.currentTime/musicAudio.duration*1000);
+musicElapsed.textContent=musicTime(musicAudio.currentTime);
+musicDuration.textContent=musicTime(musicAudio.duration);
+});
+musicAudio.addEventListener("loadedmetadata",()=>musicDuration.textContent=musicTime(musicAudio.duration));
+musicAudio.addEventListener("play",()=>musicPlay.textContent="⏸️");
+musicAudio.addEventListener("pause",()=>musicPlay.textContent="▶️");
+musicAudio.addEventListener("ended",()=>{
+if(musicTracks.length)loadMusicTrack((musicIndex+1)%musicTracks.length,true);
+});
+musicProgress.addEventListener("input",()=>{
+if(Number.isFinite(musicAudio.duration)&&musicAudio.duration>0)
+musicAudio.currentTime=Number(musicProgress.value)/1000*musicAudio.duration;
+});
+document.getElementById("musicVolume").addEventListener("input",event=>{
+musicAudio.volume=Number(event.target.value);
+});
+musicAudio.volume=.8;
+
+// GARC IA: conexión con el servidor Python
+const aiForm=document.getElementById("aiForm");
+const aiQuestion=document.getElementById("aiQuestion");
+const aiChat=document.getElementById("aiChat");
+const aiSend=document.getElementById("aiSend");
+const aiStatus=document.getElementById("aiStatus");
+
+// Esta dirección sirve para probar desde el mismo ordenador.
+// Más adelante la cambiaremos por la dirección del servidor publicado.
+const IA_API_URL="http://127.0.0.1:8000/chat";
+
+let aiHistory=[];
+
+function addAIMessage(text,type){
+const div=document.createElement("div");
+div.className="ai-message "+type;
+div.textContent=text;
+aiChat.appendChild(div);
+aiChat.scrollTop=aiChat.scrollHeight;
+}
+
+aiForm.addEventListener("submit",async event=>{
+event.preventDefault();
+const question=aiQuestion.value.trim();
+if(!question)return;
+
+addAIMessage(question,"ai-user");
+aiQuestion.value="";
+aiSend.disabled=true;
+aiStatus.textContent="GARC IA está pensando...";
+
+try{
+const response=await fetch(IA_API_URL,{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+message:question,
+history:aiHistory
+})
+});
+
+const data=await response.json();
+if(!response.ok)throw new Error(data.error||"Error del servidor");
+
+addAIMessage(data.answer,"ai-answer");
+aiHistory.push({role:"user",content:question});
+aiHistory.push({role:"assistant",content:data.answer});
+aiStatus.textContent="GARC IA está lista";
+}catch(error){
+addAIMessage("No he podido conectar con GARC IA. Comprueba que el servidor Python está encendido.","ai-answer");
+aiStatus.textContent="No se ha podido conectar.";
+}finally{
+aiSend.disabled=false;
+aiQuestion.focus();
+}
+});
+</script>
+</body>
+</html>
